@@ -1,0 +1,5 @@
+vllm==0.12.0
+python-dotenv==1.0.0
+fastapi==0.128.0
+uvicorn==0.37.0
+requests==2.32.4
