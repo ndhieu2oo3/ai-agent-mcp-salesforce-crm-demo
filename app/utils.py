@@ -1,27 +1,28 @@
-import json
 import re
 
-def extract_and_parse_json(response_text):
-    """Trích xuất và parse JSON từ response của LLM"""
-    try:
-        # Thử parse trực tiếp
-        return json.loads(response_text)
-    except json.JSONDecodeError:
-        # Tìm JSON trong markdown code blocks
-        json_match = re.search(r'```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```', 
-                              response_text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(1))
-            except json.JSONDecodeError:
-                pass
-        
-        # Tìm JSON object/array đầu tiên
-        json_match = re.search(r'(\{.*\}|\[.*\])', response_text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(1))
-            except json.JSONDecodeError:
-                pass
-        
-        raise ValueError("Không tìm thấy JSON hợp lệ trong response")
+def strip_json_mark(text: str) -> str:
+    """
+    Remove ```json / ``` wrappers from LLM output if present
+    and return clean JSON string.
+    """
+
+    if not text:
+        return text
+
+    text = text.strip()
+
+    # Case 1: ```json ... ```
+    fence_pattern = re.compile(
+        r"```(?:json)?\s*(.*?)\s*```",
+        re.DOTALL | re.IGNORECASE
+    )
+
+    match = fence_pattern.search(text)
+    if match:
+        return match.group(1).strip()
+
+    # Case 2: raw JSON already
+    if text.startswith("{") and text.endswith("}"):
+        return text
+
+    return text
